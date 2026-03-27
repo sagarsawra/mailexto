@@ -1,25 +1,27 @@
 // App.js — Root component
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://localhost:5000";
 
 const useFetch = (url) => {
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
-  React.useEffect(() => {
-    let cancelled = false;
+  const refetch = React.useCallback(() => {
     setLoading(true);
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((json) => { if (!cancelled) { setData(json); setLoading(false); } })
-      .catch((err) => { if (!cancelled) { setError(err.message); setLoading(false); } });
-    return () => { cancelled = true; };
+      .then((json) => { setData(json); setLoading(false); })
+      .catch((err) => { setError(err.message); setLoading(false); });
   }, [url]);
 
-  return { data, loading, error };
+  React.useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { data, loading, error, refetch };
 };
 
 const App = () => {
@@ -29,10 +31,21 @@ const App = () => {
 
   const handleSync = React.useCallback(() => {
     setSyncState("syncing");
-    fetch(`${BASE_URL}/api/sync`, { method: "POST" })
+
+    // Read stored userId (set after Google OAuth login)
+    const userId = localStorage.getItem("mailexto_userId") || "";
+
+    fetch(`${BASE_URL}/api/emails/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    })
       .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
       .then(() => {
         setSyncState("done");
+        // Refresh data after sync
+        emails.refetch();
+        events.refetch();
         setTimeout(() => setSyncState("idle"), 2500);
       })
       .catch(() => {

@@ -1,4 +1,16 @@
 // components/EventList.js
+const formatEventTime = (datetime) => {
+  if (!datetime) return "No time set";
+  const d = new Date(datetime);
+  if (isNaN(d.getTime())) return "No time set";
+  return d.toLocaleString("en-IN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const EventItem = ({ title, time }) =>
   React.createElement(
     "div",
@@ -24,9 +36,9 @@ const EventList = ({ loading, error, data }) => {
       return React.createElement("p", { className: "state-row" }, "No upcoming events.");
     return data.map((event) =>
       React.createElement(EventItem, {
-        key: event.id,
+        key: event._id,
         title: event.title,
-        time: event.time,
+        time: formatEventTime(event.datetime),
       })
     );
   };

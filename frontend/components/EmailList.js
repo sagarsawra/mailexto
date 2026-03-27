@@ -21,7 +21,7 @@ const EmailList = ({ loading, error, data }) => {
       .slice(0, 5)
       .map((email) =>
         React.createElement(EmailItem, {
-          key: email.id,
+          key: email._id,
           subject: email.subject,
           sender: email.sender,
         })

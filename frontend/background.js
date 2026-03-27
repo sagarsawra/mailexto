@@ -6,7 +6,12 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SYNC_REQUEST") {
-    fetch("http://localhost:8000/api/sync", { method: "POST" })
+    const userId = message.userId || "";
+    fetch("http://localhost:5000/api/emails/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    })
       .then((res) => res.json())
       .then((data) => sendResponse({ success: true, data }))
       .catch((err) => sendResponse({ success: false, error: err.message }));
