@@ -1,13 +1,37 @@
 const { google } = require("googleapis");
 const { createOAuth2Client } = require("../config/google");
+const User = require("../models/User"); // ⭐ NEW
 
 const buildAuthClient = (user) => {
   const auth = createOAuth2Client();
+
   auth.setCredentials({
     access_token: user.accessToken,
     refresh_token: user.refreshToken,
     expiry_date: user.tokenExpiry ? new Date(user.tokenExpiry).getTime() : null,
   });
+
+  // ⭐ SAVE refreshed tokens to DB
+  auth.on("tokens", async (tokens) => {
+    try {
+      if (tokens.access_token) {
+        user.accessToken = tokens.access_token;
+      }
+      if (tokens.refresh_token) {
+        user.refreshToken = tokens.refresh_token;
+      }
+
+      await User.findByIdAndUpdate(user._id, {
+        accessToken: user.accessToken,
+        refreshToken: user.refreshToken,
+      });
+
+      console.log("[gmailService] Tokens updated in DB");
+    } catch (err) {
+      console.error("[gmailService] Failed to save tokens:", err.message);
+    }
+  });
+
   return auth;
 };
 
@@ -34,7 +58,6 @@ const extractHeader = (headers, name) =>
   (headers.find((h) => h.name.toLowerCase() === name.toLowerCase()) || {}).value || "";
 
 const fetchRecentEmails = async (user, maxResults = 20) => {
-  // 🔥 FALLBACK: If no OAuth tokens → return mock data
   if (!user.accessToken && !user.refreshToken) {
     console.warn("[gmailService] No OAuth tokens found — using mock emails");
 
@@ -58,7 +81,6 @@ const fetchRecentEmails = async (user, maxResults = 20) => {
     ];
   }
 
-  // ✅ ORIGINAL LOGIC (UNCHANGED)
   const auth = buildAuthClient(user);
   const gmail = google.gmail({ version: "v1", auth });
 

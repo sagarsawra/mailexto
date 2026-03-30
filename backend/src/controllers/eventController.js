@@ -4,11 +4,13 @@ const Event = require("../models/Event");
 const getEvents = async (req, res, next) => {
   try {
     const { userId } = req.query;
+    const limit = parseInt(req.query.limit) || 20; // ⭐ NEW
+
     const filter = userId ? { userId } : {};
 
     const events = await Event.find(filter)
       .sort({ datetime: 1 })
-      .limit(20)
+      .limit(limit)
       .select("title datetime location priority")
       .lean();
 

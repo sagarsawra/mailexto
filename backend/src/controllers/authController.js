@@ -23,15 +23,16 @@ const googleAuthCallback = async (req, res, next) => {
     const { tokens } = await auth.getToken(code);
     auth.setCredentials(tokens);
 
-    // Get user info
     const oauth2 = google.oauth2({ version: "v2", auth });
     const { data } = await oauth2.userinfo.get();
 
-    // Upsert user
+    const { id: googleId, email } = data;
+
     const user = await User.findOneAndUpdate(
-      { email: data.email },
+      { email },
       {
-        email: data.email,
+        googleId,
+        email,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || undefined,
         tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
@@ -39,9 +40,16 @@ const googleAuthCallback = async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // In production: issue a JWT or session cookie here
-    res.json({ message: "Authenticated", userId: user._id, email: user.email });
+    console.log("[OAuth]", { email: user.email });
+
+    res.json({
+      message: "Authenticated",
+      userId: user._id,
+      email: user.email
+    });
+
   } catch (err) {
+    console.error("[OAuth Error]", err.message);
     next(err);
   }
 };

@@ -8,10 +8,12 @@ const enqueueEmailProcessing = async (emailId, userId) => {
       "process-email",
       { emailId: emailId.toString(), userId: userId.toString() },
       {
+        jobId: `email-${emailId}`, // ⭐ prevents duplicate jobs
         attempts: 3,
         backoff: { type: "exponential", delay: 2000 },
         removeOnComplete: { count: 500 },
         removeOnFail: { count: 1000 },
+        timeout: 30000, // ⭐ prevents stuck jobs
       }
     );
 
@@ -19,8 +21,12 @@ const enqueueEmailProcessing = async (emailId, userId) => {
 
     return job.id;
   } catch (err) {
-    console.error("[queue] Failed to enqueue job:", err.message);
-    throw err; // keep behavior same for controller handling
+    console.error("[queue] Failed to enqueue job:", {
+      emailId,
+      userId,
+      error: err.message,
+    });
+    throw err;
   }
 };
 
