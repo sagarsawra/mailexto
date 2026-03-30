@@ -1,5 +1,5 @@
 // App.js — Root component
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = window.BASE_URL || "http://localhost:5000";
 
 const useFetch = (url) => {
   const [data, setData] = React.useState(null);
@@ -8,6 +8,7 @@ const useFetch = (url) => {
 
   const refetch = React.useCallback(() => {
     setLoading(true);
+    setError(null);
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -25,20 +26,23 @@ const useFetch = (url) => {
 };
 
 const App = () => {
-  const emails = useFetch(`${BASE_URL}/api/emails`);
-  const events = useFetch(`${BASE_URL}/api/events`);
+  // Read stored userId for all API calls
+  const userId = React.useMemo(() => localStorage.getItem("mailexto_userId") || "", []);
+
+  const emails = useFetch(`${BASE_URL}/api/emails?userId=${encodeURIComponent(userId)}`);
+  const events = useFetch(`${BASE_URL}/api/events?userId=${encodeURIComponent(userId)}`);
   const [syncState, setSyncState] = React.useState("idle"); // idle | syncing | done | error
 
   const handleSync = React.useCallback(() => {
+    if (syncState === "syncing") return; // prevent double-click
     setSyncState("syncing");
 
-    // Read stored userId (set after Google OAuth login)
-    const userId = localStorage.getItem("mailexto_userId") || "";
+    const currentUserId = localStorage.getItem("mailexto_userId") || "";
 
     fetch(`${BASE_URL}/api/emails/sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId: currentUserId }),
     })
       .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
       .then(() => {
@@ -52,9 +56,11 @@ const App = () => {
         setSyncState("error");
         setTimeout(() => setSyncState("idle"), 2500);
       });
-  }, []);
+  }, [syncState]);
 
-  const importantCount = emails.data ? emails.data.filter((e) => e.important).length : 0;
+  const importantCount = React.useMemo(() => {
+    return emails.data ? emails.data.filter((e) => e.important).length : 0;
+  }, [emails.data]);
 
   const bannerProps = React.useMemo(() => {
     if (syncState === "done")
@@ -72,6 +78,7 @@ const App = () => {
     React.createElement(Header, { onSync: handleSync, syncing: syncState === "syncing" }),
     bannerProps && React.createElement(NotificationBanner, bannerProps),
     React.createElement(EmailList, { loading: emails.loading, error: emails.error, data: emails.data }),
-    React.createElement(EventList, { loading: events.loading, error: events.error, data: events.data })
+    React.createElement(EventList, { loading: events.loading, error: events.error, data: events.data }),
+    React.createElement("div", { className: "footer" }, "Powered by ", React.createElement("a", { href: "#" }, "Mailexto"))
   );
 };

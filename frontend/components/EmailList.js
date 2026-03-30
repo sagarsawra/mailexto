@@ -1,9 +1,15 @@
 // components/EmailList.js
-const EmailItem = ({ subject, sender }) =>
+
+const EmailItem = ({ subject, sender, important }) =>
   React.createElement(
     "div",
-    { className: "email-item" },
-    React.createElement("span", { className: "email-item__subject" }, subject),
+    { className: `email-item${important ? " email-item--important" : ""}` },
+    React.createElement(
+      "div",
+      { className: "email-item__header" },
+      React.createElement("span", { className: "email-item__subject" }, subject),
+      important && React.createElement("span", { className: "email-item__badge" }, "Important")
+    ),
     React.createElement("span", { className: "email-item__sender" }, sender)
   );
 
@@ -11,12 +17,27 @@ const EmailList = ({ loading, error, data }) => {
   const renderContent = () => {
     if (loading)
       return [1, 2, 3].map((i) =>
-        React.createElement("div", { className: "skeleton", key: i })
+        React.createElement("div", { className: "skeleton", key: `skeleton-email-${i}` })
       );
+
     if (error)
-      return React.createElement("p", { className: "state-row" }, "Failed to load emails.");
+      return React.createElement(
+        "div",
+        { className: "error-state" },
+        React.createElement("span", { className: "error-state__icon" }, "⚠️"),
+        React.createElement("span", { className: "error-state__message" }, "Failed to load emails"),
+        React.createElement("span", { className: "error-state__detail" }, `(${error})`)
+      );
+
     if (!data || data.length === 0)
-      return React.createElement("p", { className: "state-row" }, "No important emails.");
+      return React.createElement(
+        "div",
+        { className: "empty-state" },
+        React.createElement("span", { className: "empty-state__icon" }, "📭"),
+        React.createElement("span", { className: "empty-state__title" }, "No important emails"),
+        React.createElement("span", { className: "empty-state__subtitle" }, "You're all caught up!")
+      );
+
     return data
       .slice(0, 5)
       .map((email) =>
@@ -24,6 +45,7 @@ const EmailList = ({ loading, error, data }) => {
           key: email._id,
           subject: email.subject,
           sender: email.sender,
+          important: email.important,
         })
       );
   };

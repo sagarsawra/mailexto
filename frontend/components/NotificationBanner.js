@@ -4,7 +4,10 @@ const ICONS = { warning: "⚠️", error: "🚨", success: "✅" };
 const NotificationBanner = ({ message, type = "warning" }) => {
   return React.createElement(
     "div",
-    { className: `notification-banner notification-banner--${type}` },
+    {
+      className: `notification-banner notification-banner--${type}`,
+      role: "alert",
+    },
     React.createElement("span", { className: "notification-banner__icon" }, ICONS[type] || "ℹ️"),
     React.createElement("span", null, message)
   );

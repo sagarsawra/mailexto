@@ -9,7 +9,7 @@ const SyncIcon = ({ spinning }) =>
       strokeWidth: "2.5",
       strokeLinecap: "round",
       strokeLinejoin: "round",
-      style: spinning ? { animation: "spin 0.9s linear infinite" } : {},
+      style: spinning ? { animation: "spin 0.75s linear infinite" } : {},
     },
     React.createElement("polyline", { points: "23 4 23 10 17 10" }),
     React.createElement("polyline", { points: "1 20 1 14 7 14" }),
@@ -34,7 +34,7 @@ const Header = ({ onSync, syncing }) =>
         className: `sync-btn${syncing ? " syncing" : ""}`,
         onClick: onSync,
         disabled: syncing,
-        title: "Sync emails and events",
+        title: syncing ? "Syncing in progress..." : "Sync emails and events",
       },
       React.createElement(SyncIcon, { spinning: syncing }),
       syncing ? "Syncing…" : "Sync"
