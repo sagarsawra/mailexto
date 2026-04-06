@@ -3,22 +3,14 @@
   "name": "Inbox Intelligence",
   "version": "1.0.0",
   "description": "AI-powered email intelligence extension",
-
   "action": {
-    "default_popup": "dist/popup.html"
+    "default_popup": "popup.html"
   },
-
   "background": {
     "service_worker": "background.js"
   },
-
   "permissions": ["storage", "alarms"],
-
-  "host_permissions": [
-    "http://localhost:5000/*",
-    "http://localhost:8001/*"
-  ],
-
+  "host_permissions": ["http://localhost:5000/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

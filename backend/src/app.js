@@ -6,7 +6,12 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
-app.use(cors({ origin: "*" }));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Health check
